@@ -14,6 +14,9 @@
  *
 */
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using QuantConnect.Data;
 using QuantConnect.Util;
 using QuantConnect.Orders;
@@ -25,20 +28,30 @@ namespace QuantConnect.DataLibrary.Tests
     /// <summary>
     /// Example algorithm using the custom data type as a source of alpha
     /// </summary>
-    public class CustomDataAlgorithm : QCAlgorithm
+    public class BenzingaNewsDataAlgorithm : QCAlgorithm
     {
         private Symbol _customDataSymbol;
         private Symbol _equitySymbol;
+	private HashSet<string> _goodWords = new HashSet<string> 
+	{
+		"good",
+		"excellent",
+		"amazing",
+		"beat earnings",
+		"exceeded expectations",
+		"beat expectations",
+		"surprise"
+	};
 
         /// <summary>
         /// Initialise the data and resolution required, as well as the cash and start-end dates for your algorithm. All algorithms must initialized.
         /// </summary>
         public override void Initialize()
         {
-            SetStartDate(2013, 10, 07);  //Set Start Date
-            SetEndDate(2013, 10, 11);    //Set End Date
-            _equitySymbol = AddEquity("SPY").Symbol;
-            _customDataSymbol = AddData<MyCustomDataType>(_equitySymbol).Symbol;
+            SetStartDate(2020, 1, 1);  //Set Start Date
+            SetEndDate(2021, 1, 1);    //Set End Date
+            _equitySymbol = AddEquity("AAPL").Symbol;
+            _customDataSymbol = AddData<BenzingaNews>(_equitySymbol).Symbol;
         }
 
         /// <summary>
@@ -47,17 +60,18 @@ namespace QuantConnect.DataLibrary.Tests
         /// <param name="slice">Slice object keyed by symbol containing the stock data</param>
         public override void OnData(Slice slice)
         {
-            var data = slice.Get<MyCustomDataType>();
+            var data = slice.Get<BenzingaNews>();
             if (!data.IsNullOrEmpty())
             {
-                // based on the custom data property we will buy or short the underlying equity
-                if (data[_customDataSymbol].SomeCustomProperty == "buy")
+                // based on the custom data property we will buy or liquidate the underlying equity
+                var contents = data[_customDataSymbol].Contents;
+                if (_goodWords.Any(x => contents.Contains(x, StringComparison.InvariantCultureIgnoreCase)))
                 {
                     SetHoldings(_equitySymbol, 1);
                 }
-                else if (data[_customDataSymbol].SomeCustomProperty == "sell")
+                else
                 {
-                    SetHoldings(_equitySymbol, -1);
+                    Liquidate(_equitySymbol);
                 }
             }
         }

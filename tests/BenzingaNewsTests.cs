@@ -21,13 +21,14 @@ using System.Linq;
 using ProtoBuf.Meta;
 using Newtonsoft.Json;
 using NUnit.Framework;
+using System.Collections.Generic;
 using QuantConnect.Data;
 using QuantConnect.DataSource;
 
 namespace QuantConnect.DataLibrary.Tests
 {
     [TestFixture]
-    public class MyCustomDataTypeTests
+    public class BenzingaNewsTests
     {
         [Test]
         public void JsonRoundTrip()
@@ -87,12 +88,36 @@ namespace QuantConnect.DataLibrary.Tests
 
         private BaseData CreateNewInstance()
         {
-            return new MyCustomDataType
+            return new BenzingaNews
             {
                 Symbol = Symbol.Empty,
                 Time = DateTime.Today,
                 DataType = MarketDataType.Base,
-                SomeCustomProperty = "This is some market related information"
+
+                Id = 100,
+                Author = "Fredrich Gauss",
+                CreatedAt = new DateTime(2020, 6, 30),
+                UpdatedAt = new DateTime(2020, 6, 30),
+                Title = "New Formula Discovered",
+                Teaser = "A new formula for calculating something has come out",
+                Contents = "A new formula for calculating something has come out. This is very important.",
+                Categories = new List<string>
+                {
+                    "math",
+                    "history"
+                },
+                Symbols = new List<Symbol>
+                {
+                    Symbol.Create("AAPL", SecurityType.Equity, Market.USA),
+                    Symbol.Create("TMUS", SecurityType.Equity, Market.USA),
+                    Symbol.Empty
+                },
+                Tags = new List<string>
+                {
+                    "gauss",
+                    "statistics",
+                    "markets"
+                }
             };
         }
     }
