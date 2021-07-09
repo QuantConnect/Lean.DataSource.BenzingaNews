@@ -30,6 +30,11 @@ namespace QuantConnect.DataSource
     [ProtoContract(SkipConstructor = true)]
     public class BenzingaNews : IndexedBaseData
     {
+        /// <summary>
+        /// Data source ID
+        /// </summary>
+        public static int DataSourceId { get; } = 2015;
+
         private List<string> _categories;
         private List<string> _tags;
         private List<Symbol> _symbols;
