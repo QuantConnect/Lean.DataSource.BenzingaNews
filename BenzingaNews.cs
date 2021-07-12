@@ -198,11 +198,6 @@ namespace QuantConnect.DataSource
         /// <returns>SubscriptionDataSource indicating where data is located and how it's stored</returns>
         public override SubscriptionDataSource GetSource(SubscriptionDataConfig config, DateTime date, bool isLiveMode)
         {
-            if (isLiveMode)
-            {
-                throw new NotImplementedException("BenzingaNews currently does not support live trading mode."); 
-            }
-            
             return new SubscriptionDataSource(
                 Path.Combine(
                     Globals.DataFolder,
