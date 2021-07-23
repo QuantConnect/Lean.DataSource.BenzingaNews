@@ -1,7 +1,7 @@
 ﻿
 
 using NUnit.Framework;
-using QuantConnect.DataQueueHandlers;
+using QuantConnect.DataSource.DataQueueHandlers;
 using System;
 
 namespace QuantConnect.DataLibrary.Tests

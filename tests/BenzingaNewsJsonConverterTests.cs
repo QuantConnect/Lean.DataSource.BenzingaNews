@@ -19,6 +19,7 @@ using System.Globalization;
 using System.Linq;
 using Newtonsoft.Json;
 using NUnit.Framework;
+using QuantConnect.Configuration;
 using QuantConnect.Data;
 using QuantConnect.DataSource;
 
@@ -27,6 +28,13 @@ namespace QuantConnect.DataLibrary.Tests
     [TestFixture]
     public class BenzingaNewsJsonConverterTests
     {
+        [SetUp]
+        public void Setup() 
+        {
+            Config.Set("data-folder", "../../../../../Lean/Data");
+            Globals.Reset();
+        }
+
         [Test]
         public void DeserializesCorrectly()
         {
@@ -127,11 +135,12 @@ namespace QuantConnect.DataLibrary.Tests
 
             var createdAt = new DateTime(2020, 3, 19, 10, 0, 0);
             var updatedAt = new DateTime(2020, 3, 19, 10, 15, 0);
+            var spy = Symbol.Create("SPY", SecurityType.Equity, Market.USA);
 
             var item = new BenzingaNews
             {
                 Id = 1,
-                Symbol = Symbols.SPY,
+                Symbol = spy,
                 Title = "title",
                 CreatedAt = createdAt,
                 UpdatedAt = updatedAt,
@@ -141,7 +150,7 @@ namespace QuantConnect.DataLibrary.Tests
             var deserialized = JsonConvert.DeserializeObject<BenzingaNews>(serialized, settings);
 
             Assert.AreEqual(1, deserialized.Id);
-            Assert.AreEqual(Symbols.SPY, deserialized.Symbol);
+            Assert.AreEqual(spy, deserialized.Symbol);
             Assert.AreEqual("title", deserialized.Title);
             Assert.AreEqual(createdAt, deserialized.CreatedAt);
             Assert.AreEqual(updatedAt, deserialized.UpdatedAt);

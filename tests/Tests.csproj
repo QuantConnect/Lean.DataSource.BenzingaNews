@@ -5,6 +5,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="..\Demonstration.cs" Link="Demonstration.cs" />
+    <Compile Include="..\BenzingaNewsAlgorithm.cs" Link="BenzingaNewsAlgorithm.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="protobuf-net" Version="3.0.29" />
@@ -19,5 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\QuantConnect.DataSource.csproj" />
+    <ProjectReference Include="..\DataQueueHandlers\QuantConnect.DataSource.DataQueueHandlers.csproj" />
   </ItemGroup>
 </Project>

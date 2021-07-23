@@ -20,6 +20,9 @@
     <Compile Remove="tests\**" />
     <EmbeddedResource Remove="tests\**" />
     <None Remove="tests\**" />
+    <Compile Remove="DataQueueHandlers\**" />
+    <EmbeddedResource Remove="DataQueueHandlers\**" />
+    <None Remove="DataQueueHandlers\**" />
     <Compile Remove="Demonstration.cs" />
     <Compile Remove="BenzingaNewsAlgorithm.cs" />
     <None Remove="BenzingaNewsAlgorithm.py" />
