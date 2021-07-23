@@ -20,6 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\QuantConnect.DataSource.csproj" />
-    <ProjectReference Include="..\DataQueueHandlers\QuantConnect.DataSource.DataQueueHandlers.csproj" />
+    <ProjectReference Include="..\DataQueueHandlers\DataQueueHandlers.csproj" />
   </ItemGroup>
 </Project>
