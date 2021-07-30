@@ -67,8 +67,6 @@ namespace QuantConnect.DataSource.DataQueueHandlers
         /// <param name="overrideSubscriptionCheck">Allows for any <see cref="Symbol"/> to be added to the active subscriptions</param>
         public BenzingaDataQueueHandler()
         {
-            RuntimeTypeModel.Default[typeof(BaseData)].AddSubType(BenzingaNews.DataSourceId, typeof(BenzingaNews));
-
             _dataAggregator = Composer.Instance.GetPart<IDataAggregator>() ?? 
                 Composer.Instance.GetExportedValueByTypeName<IDataAggregator>(Config.Get("data-aggregator", "QuantConnect.Data.Common.CustomDataAggregator"));
 

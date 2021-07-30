@@ -4,6 +4,7 @@
     <TargetFramework>net5.0</TargetFramework>
     <RootNamespace>QuantConnect.DataSource.DataQueueHandlers</RootNamespace>
     <AssemblyName>QuantConnect.DataSource.DataQueueHandlers.BenzingaNews</AssemblyName>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
 
   <ItemGroup>
