@@ -15,12 +15,12 @@
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
+using System.Net;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using QuantConnect.DataSource;
+using QuantConnect.Logging;
 using QuantConnect.Util;
 
 namespace QuantConnect.DataSource.DataQueueHandlers
@@ -35,37 +35,51 @@ namespace QuantConnect.DataSource.DataQueueHandlers
         public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
             var token = JToken.Load(reader);
-            var channels = token["channels"].ToList(x => x.Value<string>());
-            // Normalize the live DateTimes as they differ from the Newsfeed API's date formats
-            var created = NormalizeUtcDateTime(token["published"].Value<string>());
-            var updated = NormalizeUtcDateTime(token["updated"].Value<string>());
+            token = token["content"];
 
-            token["created"] = created;
-            token["updated"] = updated;
-            // Empty list for the meanwhile since the two formats are incompatible
-            token["channels"] = JToken.FromObject(new List<string>());
-            // Normalize the single ticker format (e.g. ["SPY", "AAPL"]) into the Newsfeed format.
-            token["stocks"] = JToken.FromObject(token["tickers"]?.ToList(x => x).Select(x =>
+            if (token == null)
             {
-                if (x?.Type == JTokenType.String)
+                return null;
+            }
+
+            var instance = new BenzingaNews
+            {
+                Id = token.Value<int>("id"),
+                Symbols = new List<Symbol>(),
+                Teaser = token["teaser"]?.Value<string>() ?? string.Empty,
+                Title = token.Value<string>("title"),
+                Categories = token["channels"]?.ToList(x => x.Value<string>()) ?? new List<string>(),
+                CreatedAt = token.Value<DateTime>("created_at").ToUniversalTime(),
+                UpdatedAt = token.Value<DateTime>("updated_at").ToUniversalTime(),
+                Author = token["authors"]?.ToList(x => x.Value<string>())?.FirstOrDefault(),
+                // Strip all HTML tags from the article, then convert HTML entities to their string representation
+                // e.g. "<html><p>Apple&#39;s Earnings</p></html>" would become "Apple's Earnings"
+                Contents = WebUtility.HtmlDecode(Regex.Replace(token.Value<string>("body"), @"<[^>]*>", " ")),
+                // Set the endtime at the end since that's whenever we finished parsing the message
+                EndTime = DateTime.UtcNow
+            };
+
+            if (token["securities"] != null)
+            {
+                foreach (var ticker in JArray.Parse(token["securities"].ToString()))
                 {
-                    var newToken = new JObject();
-                    newToken["name"] = x;
+                    // Tickers with dots in them like BRK.A and BRK.B appear as BRK-A and BRK-B in Benzinga data.
+                    // They can also appear as BRK/B or BRK/A in some instances.
+                    var symbolTicker = ticker.Value<string>("symbol").Trim().Replace('-', '.').Replace('/', '.');
 
-                    return newToken;
+                    // Tickers can be empty/null in Benzinga API responses.
+                    // Verified by observing and processing empty ticker
+                    if (string.IsNullOrWhiteSpace(symbolTicker))
+                    {
+                        Log.Error($"BenzingaNewsJsonConverter.DeserializeNews(): Empty ticker was found in article with ID: {instance.Id}");
+                        continue;
+                    }
+                    instance.Symbols.Add(new Symbol(
+                        SecurityIdentifier.GenerateEquity(symbolTicker, Market.USA, mapSymbol: true, mappingResolveDate: instance.CreatedAt),
+                        symbolTicker
+                    ));
                 }
-
-                return x;
-            }) ?? new List<JToken>());
-
-            var instance = BenzingaNewsJsonConverter.DeserializeNews(token);
-            instance.Categories = channels;
-            instance.Author = token["authors"]?
-                .ToList(x => x["name"] != null ? x["name"].Value<string>() : x?.Value<string>())?
-                .FirstOrDefault();
-
-            // Set the endtime at the end since that's whenever we finished parsing the message
-            instance.EndTime = DateTime.UtcNow;
+            }
 
             return instance;
         }
@@ -73,19 +87,6 @@ namespace QuantConnect.DataSource.DataQueueHandlers
         public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
             throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Normalizes live TCP dates to a DateTime object
-        /// </summary>
-        /// <param name="date">Raw date</param>
-        /// <returns>DateTime</returns>
-        /// <remarks>Example <paramref name="rawDate"> is: "Wed Mar  4 2020 19:54:18 GMT+0000 (UTC)"</remarks>
-        public static DateTime NormalizeUtcDateTime(string rawDate)
-        {
-            rawDate = Regex.Replace(rawDate, @"\s+", " ");
-            rawDate = rawDate.Substring(0, rawDate.IndexOf("GMT")).Trim();
-            return Parse.DateTimeExact(rawDate, "ddd MMM d yyyy HH:mm:ss", DateTimeStyles.AdjustToUniversal);
         }
     }
 }
