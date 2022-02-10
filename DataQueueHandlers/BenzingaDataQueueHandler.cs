@@ -31,7 +31,7 @@ namespace QuantConnect.DataSource.DataQueueHandlers
     public class BenzingaDataQueueHandler : IDataQueueHandler
     {
         private readonly static string _endpoint = Config.Get("benzinga-endpoint", "wss://api.benzinga.com/api/v1/news/stream");
-        private readonly static string _key = Config.Get("benzinga-key", "aeef7efc66c549b69999282df371b56c");
+        private readonly static string _key = Config.Get("benzinga-key");
 
         private readonly IDataAggregator _dataAggregator;
         private readonly WebSocketClientWrapper _clientWrapper = new();
@@ -52,8 +52,12 @@ namespace QuantConnect.DataSource.DataQueueHandlers
             _dataAggregator = Composer.Instance.GetExportedValueByTypeName<IDataAggregator>(
                 Config.Get("data-aggregator", "QuantConnect.Data.Common.CustomDataAggregator"), forceTypeNameOnExisting: false);
 
+            if (string.IsNullOrEmpty(_key))
+            {
+                throw new ArgumentException("'benzinga-key' is required configuration value");
+            }
             _clientWrapper.Message += OnClientWrapperOnMessage;
-            _clientWrapper.Initialize(_endpoint, _key);
+            _clientWrapper.Initialize($"{_endpoint}?token={_key}");
             _clientWrapper.Connect();
         }
 
@@ -62,6 +66,10 @@ namespace QuantConnect.DataSource.DataQueueHandlers
             try
             {
                 var textMessage = message.Data as WebSocketClientWrapper.TextMessage;
+                if (Log.DebuggingEnabled)
+                {
+                    Log.Debug($"BenzingaDataQueueHandler.OnClientWrapperOnMessage(): new message: {textMessage.Message}");
+                }
                 var jObject = JObject.Parse(textMessage.Message);
 
                 var kind = jObject["kind"]?.ToString();
@@ -71,6 +79,10 @@ namespace QuantConnect.DataSource.DataQueueHandlers
                     if (data != null)
                     {
                         var newsData = JsonConvert.DeserializeObject<BenzingaNews>(data, _liveJsonConverter);
+                        if (newsData == null)
+                        {
+                            return;
+                        }
                         var symbolsToEmit = newsData.Symbols.Select(s => Symbol.CreateBase(typeof(BenzingaNews), s, Market.USA));
 
                         foreach (var symbol in symbolsToEmit)
