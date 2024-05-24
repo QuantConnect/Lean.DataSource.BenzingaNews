@@ -14,8 +14,9 @@
 */
 
 using QuantConnect.Configuration;
-using QuantConnect.DataSource;
+using QuantConnect.Interfaces;
 using QuantConnect.Logging;
+using QuantConnect.Util;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -32,6 +33,10 @@ namespace QuantConnect.DataProcessing
             var tempOutputDirectory = Config.Get("temp-output-directory", "/temp-output-directory");
             var processedDataFolder = Config.Get("processed-data-directory", Path.Combine(Globals.DataFolder, "alternative", "benzinga"));
             var downloadDestinationFolder = Directory.CreateDirectory(Path.Combine(Config.Get("raw-folder", "/raw"), "alternative", "benzinga"));
+
+            var dataProvider = Composer.Instance.GetExportedValueByTypeName<IDataProvider>(Config.Get("data-provider", "DefaultDataProvider"));
+            var mapFileProvider = Composer.Instance.GetExportedValueByTypeName<IMapFileProvider>(Config.Get("map-file-provider", "LocalZipMapFileProvider"));
+            mapFileProvider.Initialize(dataProvider);
 
             var timer = Stopwatch.StartNew();
 
