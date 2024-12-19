@@ -24,12 +24,21 @@ using NUnit.Framework;
 using System.Collections.Generic;
 using QuantConnect.Data;
 using QuantConnect.DataSource;
+using QuantConnect.Data.Auxiliary;
+using QuantConnect.Interfaces;
+using QuantConnect.Util;
 
 namespace QuantConnect.DataLibrary.Tests
 {
     [TestFixture]
     public class BenzingaNewsTests
     {
+        [OneTimeSetUp]
+        public void Setup()
+        {
+            Composer.Instance.GetExportedValueByTypeName<IMapFileProvider>(Configuration.Config.Get("map-file-provider", typeof(LocalDiskMapFileProvider).Name));
+        }
+
         [Test]
         public void JsonRoundTrip()
         {
